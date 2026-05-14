@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="CaloriTrack">
+  <title>🌸 CaloriTrack</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Bebas+Neue&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body {
+      background: #0a0a14;
+      color: #f0f0f0;
+      font-family: 'Nunito', sans-serif;
+      min-height: 100vh;
+      padding-bottom: 80px;
+    }
+    .app { max-width: 480px; margin: 0 auto; }
+
+    /* Header */
+    .header {
+      background: linear-gradient(160deg, #1e1b4b 0%, #0f0f1a 100%);
+      padding: 24px 20px 20px;
+      border-bottom: 1px solid #1e1e3a;
+    }
+    .header-top { display: flex; justify-content: space-between; align-items: flex-start; }
+    h1 { font-family: 'Bebas Neue', sans-serif; font-size: 34px; letter-spacing: 2px; color: #f9a8d4; }
+    .subtitle { color: #c084fc; font-size: 11px; margin-top: 2px; }
+    .badge-saved { background: #064e3b; color: #4ade80; font-size: 12px; padding: 4px 10px; border-radius: 20px; font-weight: 700; display: none; }
+    .badge-saved.show { display: inline-block; }
+
+    /* Stats */
+    .stats { display: flex; gap: 8px; margin: 16px 0 12px; }
+    .stat-box { flex: 1; background: #ffffff07; border-radius: 10px; padding: 10px 8px; text-align: center; border: 1px solid #ffffff0a; }
+    .stat-val { font-weight: 800; font-size: 18px; }
+    .stat-label { font-size: 10px; color: #505070; margin-top: 2px; }
+
+    /* Progress bar */
+    .bar-bg { background: #1a1a30; border-radius: 99px; height: 8px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 99px; transition: width 0.4s ease; }
+    .alert { color: #f87171; font-size: 12px; font-weight: 700; margin-top: 6px; }
+
+    /* Conseil */
+    .conseil { margin-top: 12px; background: #2d1b4e; border: 1px solid #7c3aed44; border-radius: 10px; padding: 10px 12px; display: flex; gap: 8px; align-items: flex-start; }
+    .conseil p { color: #d8b4fe; font-size: 12px; line-height: 1.5; }
+
+    /* Objectif toggle */
+    .btn-objectif { margin-top: 10px; background: #ffffff08; border: 1px solid #ffffff14; border-radius: 8px; color: #818cf8; font-size: 12px; padding: 5px 12px; cursor: pointer; font-family: inherit; }
+    .objectif-list { margin-top: 8px; display: flex; flex-direction: column; gap: 4px; }
+    .objectif-list button { background: #ffffff08; border: 1px solid #ffffff12; border-radius: 8px; color: #f0f0f0; padding: 7px 12px; cursor: pointer; font-size: 13px; text-align: left; font-family: inherit; }
+    .objectif-list button.active { background: #4338ca; }
+    .hidden { display: none; }
+
+    /* Tabs */
+    .tabs { display: flex; background: #0d0d18; border-bottom: 1px solid #1a1a2e; }
+    .tab-btn { flex: 1; padding: 13px 0; border: none; background: transparent; color: #404060; font-weight: 700; font-size: 14px; cursor: pointer; border-bottom: 2px solid transparent; font-family: inherit; }
+    .tab-btn.active { color: #818cf8; border-bottom-color: #6366f1; }
+
+    /* Content */
+    .content { padding: 16px; }
+    .section { display: flex; flex-direction: column; gap: 14px; }
+
+    /* Inputs */
+    input { width: 100%; padding: 11px 14px; background: #13131f; border: 1px solid #2a2a45; border-radius: 10px; color: #f0f0f0; font-size: 15px; outline: none; font-family: inherit; }
+    input::placeholder { color: #404060; }
+    label { font-size: 11px; color: #505070; display: block; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px; }
+
+    /* Dropdown results */
+    .results { background: #13131f; border: 1px solid #2a2a45; border-radius: 10px; margin-top: 6px; max-height: 220px; overflow-y: auto; }
+    .result-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-bottom: 1px solid #1a1a30; cursor: pointer; }
+    .result-item:hover { background: #1e1e38; }
+    .result-item:last-child { border-bottom: none; }
+    .result-kcal { color: #818cf8; font-weight: 700; font-size: 13px; }
+    .perso-badge { font-size: 10px; color: #818cf8; margin-left: 4px; }
+    .no-result { color: #404060; font-size: 13px; margin-top: 8px; }
+
+    /* Cards */
+    .card { background: #13131f; border: 1px solid #2a2a45; border-radius: 12px; padding: 16px; }
+    .card.selected { border-color: #4f46e5; }
+    .card-title { font-weight: 700; color: #818cf8; font-size: 14px; margin-bottom: 4px; }
+    .card-subtitle { color: #505070; font-size: 12px; margin-bottom: 12px; }
+
+    /* Selected food */
+    .food-info { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+    .food-emoji { font-size: 30px; }
+    .food-name { font-weight: 700; }
+    .food-sub { color: #505070; font-size: 12px; }
+    .total-box { margin-top: 10px; padding: 10px 14px; background: #1e1e38; border-radius: 8px; display: flex; justify-content: space-between; }
+    .total-box span:last-child { color: #a5b4fc; font-weight: 800; font-size: 20px; }
+
+    /* Buttons */
+    .btn { width: 100%; padding: 12px; border: none; border-radius: 10px; color: #fff; font-weight: 700; font-size: 15px; cursor: pointer; margin-top: 10px; font-family: inherit; }
+    .btn-primary { background: linear-gradient(135deg, #6366f1, #8b5cf6); }
+    .btn-green { background: linear-gradient(135deg, #059669, #0d9488); }
+    .btn-red { background: linear-gradient(135deg, #7f1d1d, #991b1b); }
+    .btn-small { width: auto; padding: 10px 24px; }
+
+    /* Message */
+    .msg { margin-top: 8px; padding: 8px 12px; background: #1a2a1a; border: 1px solid #2d5a2d; border-radius: 8px; color: #4ade80; font-size: 13px; display: none; }
+    .msg.show { display: block; }
+    .msg.info { background: #1a1a2e; border-color: #2a2a5e; color: #818cf8; }
+
+    /* Custom list */
+    .custom-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 10px; background: #1a1a30; border-radius: 8px; margin-bottom: 6px; }
+    .custom-item span { font-size: 13px; }
+    .custom-kcal { color: #818cf8; font-size: 13px; font-weight: 700; }
+    .btn-remove { background: #ff444418; border: 1px solid #ff444435; border-radius: 5px; color: #f87171; padding: 2px 6px; cursor: pointer; font-size: 11px; font-family: inherit; }
+
+    /* Journal */
+    .journal-item { display: flex; align-items: center; justify-content: space-between; background: #13131f; border-radius: 12px; padding: 12px 14px; border: 1px solid #1e1e35; margin-bottom: 8px; }
+    .journal-left { display: flex; align-items: center; gap: 10px; }
+    .journal-emoji { font-size: 24px; }
+    .journal-name { font-weight: 600; font-size: 14px; }
+    .journal-g { font-size: 11px; color: #404060; }
+    .journal-right { display: flex; align-items: center; gap: 10px; }
+    .journal-kcal { font-weight: 800; color: #a5b4fc; font-size: 16px; }
+
+    /* Summary */
+    .summary { margin-top: 14px; background: #1a1733; border: 1px solid #4338ca; border-radius: 12px; padding: 16px; }
+    .summary-row { display: flex; justify-content: space-between; align-items: center; padding: 0 0 8px; }
+    .summary-row.total { padding: 8px 0 0; border-top: 1px solid #2d2a5e; }
+    .summary-label { color: #a0a0c0; font-size: 14px; }
+    .summary-val { font-weight: 800; }
+
+    /* Save indicator */
+    .save-indicator { margin-top: 10px; background: #0f1f15; border: 1px solid #064e3b; border-radius: 10px; padding: 10px 14px; display: flex; align-items: center; gap: 8px; }
+    .save-indicator span:last-child { color: #4ade80; font-size: 13px; }
+
+    /* Empty state */
+    .empty { text-align: center; padding: 50px 0; color: #303050; }
+    .empty .emoji { font-size: 52px; }
+    .empty p { margin-top: 12px; font-size: 15px; }
+
+    /* Input row */
+    .input-mb { margin-bottom: 8px; }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-top">
+      <div>
+        <h1>🌸 CaloriTrack</h1>
+        <p class="subtitle" id="dateLabel"></p>
+      </div>
+      <span class="badge-saved" id="savedBadge">✓ Sauvegardé</span>
+    </div>
+
+    <div class="stats">
+      <div class="stat-box">
+        <div class="stat-val" id="statConsomme" style="color:#22c55e">0</div>
+        <div class="stat-label">Consommé</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val" id="statRestant" style="color:#60a5fa">1300</div>
+        <div class="stat-label">Restant</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val" id="statObjectif" style="color:#a78bfa">1300</div>
+        <div class="stat-label">Objectif</div>
+      </div>
+    </div>
+
+    <div class="bar-bg"><div class="bar-fill" id="barFill" style="width:0%;background:linear-gradient(90deg,#22c55e,#22c55e99)"></div></div>
+    <p class="alert hidden" id="alertDepasse"></p>
+
+    <div class="conseil">
+      <span>💡</span>
+      <p id="conseilText"></p>
+    </div>
+
+    <button class="btn-objectif" onclick="toggleObjectif()">🎯 Objectif : <span id="objectifLabel">1300</span> kcal ▼</button>
+    <div class="objectif-list hidden" id="objectifList">
+      <button onclick="setObjectif(1300)" data-val="1300">Perte de poids (activité légère) — 1300 kcal</button>
+      <button onclick="setObjectif(1450)" data-val="1450">Perte de poids (activité modérée) — 1450 kcal</button>
+      <button onclick="setObjectif(1600)" data-val="1600">Maintien (activité légère) — 1600 kcal</button>
+      <button onclick="setObjectif(1800)" data-val="1800">Maintien (activité modérée) — 1800 kcal</button>
+      <button onclick="setObjectif(2000)" data-val="2000">Maintien (très active) — 2000 kcal</button>
+      <input type="number" placeholder="Objectif personnalisé (kcal)" onchange="setObjectif(parseInt(this.value))" style="margin-top:4px">
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab-btn active" id="tabAjouter" onclick="showTab('ajouter')">➕ Ajouter</button>
+    <button class="tab-btn" id="tabJournal" onclick="showTab('journal')">📋 Journal (<span id="journalCount">0</span>)</button>
+  </div>
+
+  <!-- Content -->
+  <div class="content">
+
+    <!-- AJOUTER -->
+    <div id="panelAjouter" class="section">
+      <div>
+        <label id="searchLabel">Rechercher un aliment</label>
+        <input type="text" id="searchInput" placeholder="Ex: poulet, pomme, riz..." oninput="onSearch()">
+        <div class="results hidden" id="resultsList"></div>
+        <p class="no-result hidden" id="noResult">Aucun résultat — utilise la saisie manuelle ci-dessous pour l'ajouter.</p>
+      </div>
+
+      <!-- Aliment sélectionné -->
+      <div class="card selected hidden" id="selectedCard">
+        <div class="food-info">
+          <span class="food-emoji" id="selEmoji"></span>
+          <div>
+            <div class="food-name" id="selNom"></div>
+            <div class="food-sub" id="selSub"></div>
+          </div>
+        </div>
+        <label>Quantité (grammes)</label>
+        <input type="number" id="quantiteInput" value="100" min="1" oninput="updateTotal()">
+        <div class="total-box">
+          <span style="color:#a0a0c0">Total estimé</span>
+          <span id="totalEstime">0 kcal</span>
+        </div>
+        <button class="btn btn-primary" onclick="ajouterAliment()">✅ Ajouter au journal</button>
+      </div>
+
+      <!-- Saisie manuelle -->
+      <div class="card">
+        <p class="card-title">✏️ Saisie manuelle</p>
+        <p class="card-subtitle">Le produit sera automatiquement sauvegardé dans ta liste</p>
+        <input type="text" id="nomManuel" placeholder="Nom du produit (ex: pizza maison)" class="input-mb">
+        <input type="number" id="kcalManuel" placeholder="Kilocalories totales" min="0">
+        <div class="msg" id="msgManuel"></div>
+        <button class="btn btn-green" onclick="ajouterManuel()">✅ Ajouter</button>
+      </div>
+
+      <!-- Produits perso -->
+      <div class="card hidden" id="customSection">
+        <p class="card-title" id="customTitle">📚 Tes produits sauvegardés</p>
+        <div id="customList"></div>
+      </div>
+    </div>
+
+    <!-- JOURNAL -->
+    <div id="panelJournal" class="hidden">
+      <div id="emptyState" class="empty">
+        <div class="emoji">🍽️</div>
+        <p>Aucun aliment ajouté aujourd'hui</p>
+        <button class="btn btn-primary btn-small" onclick="showTab('ajouter')" style="margin-top:12px">➕ Ajouter un aliment</button>
+      </div>
+      <div id="journalItems" class="hidden"></div>
+      <div class="summary hidden" id="summary">
+        <div class="summary-row">
+          <span class="summary-label">Total consommé</span>
+          <span class="summary-val" id="sumConsomme" style="font-size:18px">0 kcal</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Objectif</span>
+          <span class="summary-val" id="sumObjectif" style="font-size:15px;color:#818cf8">1300 kcal</span>
+        </div>
+        <div class="summary-row total">
+          <span class="summary-label" id="sumRestantLabel">Il te reste</span>
+          <span class="summary-val" id="sumRestant" style="font-size:18px;color:#4ade80">1300 kcal</span>
+        </div>
+      </div>
+      <div class="save-indicator hidden" id="saveIndicator">
+        <span>💾</span>
+        <span>Journal sauvegardé automatiquement</span>
+      </div>
+      <button class="btn btn-red hidden" id="btnReinit" onclick="reinitialiser()">🗑️ Réinitialiser le journal</button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const TODAY = new Date().toISOString().split('T')[0];
+
+const ALIMENTS_BASE = [
+  { nom: "Pomme", kcal: 52, emoji: "🍎" },
+  { nom: "Banane", kcal: 89, emoji: "🍌" },
+  { nom: "Orange", kcal: 47, emoji: "🍊" },
+  { nom: "Fraises", kcal: 32, emoji: "🍓" },
+  { nom: "Myrtilles", kcal: 57, emoji: "🫐" },
+  { nom: "Poulet grillé", kcal: 165, emoji: "🍗" },
+  { nom: "Saumon", kcal: 208, emoji: "🐟" },
+  { nom: "Oeuf", kcal: 155, emoji: "🥚" },
+  { nom: "Thon en boite", kcal: 116, emoji: "🐠" },
+  { nom: "Jambon blanc", kcal: 107, emoji: "🥩" },
+  { nom: "Encornets farcis", kcal: 200, emoji: "🦑" },
+  { nom: "Riz cuit", kcal: 130, emoji: "🍚" },
+  { nom: "Pates cuites", kcal: 158, emoji: "🍝" },
+  { nom: "Pain complet", kcal: 247, emoji: "🍞" },
+  { nom: "Pomme de terre", kcal: 77, emoji: "🥔" },
+  { nom: "Carotte", kcal: 41, emoji: "🥕" },
+  { nom: "Concombre", kcal: 15, emoji: "🥒" },
+  { nom: "Tomate", kcal: 18, emoji: "🍅" },
+  { nom: "Avocat", kcal: 160, emoji: "🥑" },
+  { nom: "Epinards", kcal: 23, emoji: "🥬" },
+  { nom: "Yaourt grec 0%", kcal: 59, emoji: "🥛" },
+  { nom: "Fromage blanc 0%", kcal: 45, emoji: "🫙" },
+  { nom: "Amandes", kcal: 579, emoji: "🌰" },
+  { nom: "Chocolat noir 85%", kcal: 598, emoji: "🍫" },
+  { nom: "Houmous", kcal: 166, emoji: "🫘" },
+  { nom: "Huile d'olive", kcal: 884, emoji: "🫒" },
+  { nom: "Beurre", kcal: 717, emoji: "🧈" },
+  { nom: "Limonade Lorina artisanale", kcal: 32, emoji: "🍋" },
+];
+
+const CONSEILS = [
+  "A 40 ans, le métabolisme ralentit. Privilégie les protéines pour préserver ta masse musculaire 💪",
+  "Le calcium est essentiel : yaourt, fromage blanc et sardines protègent tes os 🦴",
+  "Les oméga-3 (saumon, thon) sont tes alliés pour l'énergie et l'équilibre hormonal 🐟",
+  "Boire 1,5L d'eau par jour aide à réduire les fausses faims et booste ton métabolisme 💧",
+  "Les fibres (légumes, fruits) favorisent la satiété et régulent la glycémie 🥦",
+  "Une bonne nuit de sommeil aide à réguler les hormones de la faim 😴",
+  "Manger lentement et mâcher aide à mieux ressentir la satiété 🍽️",
+];
+
+// State
+let journal = [];
+let objectif = 1300;
+let alimentsCustom = [];
+let selectionne = null;
+
+// Load
+function load() {
+  const j = localStorage.getItem('journal_' + TODAY);
+  if (j) journal = JSON.parse(j);
+  const o = localStorage.getItem('objectif');
+  if (o) objectif = parseInt(o);
+  const c = localStorage.getItem('aliments_custom');
+  if (c) alimentsCustom = JSON.parse(c);
+
+  // Date
+  document.getElementById('dateLabel').textContent = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+  // Conseil
+  document.getElementById('conseilText').textContent = CONSEILS[new Date().getDay() % CONSEILS.length];
+
+  refreshAll();
+}
+
+function saveJournal() {
+  localStorage.setItem('journal_' + TODAY, JSON.stringify(journal));
+  showSaved();
+}
+function saveObjectif() { localStorage.setItem('objectif', objectif); }
+function saveCustom() { localStorage.setItem('aliments_custom', JSON.stringify(alimentsCustom)); }
+
+function showSaved() {
+  const b = document.getElementById('savedBadge');
+  b.classList.add('show');
+  setTimeout(() => b.classList.remove('show'), 1500);
+}
+
+function tousAliments() {
+  return [
+    ...ALIMENTS_BASE,
+    ...alimentsCustom.filter(c => !ALIMENTS_BASE.some(a => a.nom.toLowerCase() === c.nom.toLowerCase()))
+  ];
+}
+
+function getColor(pct) {
+  if (pct < 70) return '#22c55e';
+  if (pct < 95) return '#f59e0b';
+  return '#ef4444';
+}
+
+function refreshAll() {
+  const total = journal.reduce((s, e) => s + e.kcal, 0);
+  const restant = objectif - total;
+  const pct = Math.min((total / objectif) * 100, 100);
+  const couleur = getColor(pct);
+
+  // Stats
+  document.getElementById('statConsomme').textContent = total;
+  document.getElementById('statConsomme').style.color = couleur;
+  document.getElementById('statRestant').textContent = Math.max(restant, 0);
+  document.getElementById('statObjectif').textContent = objectif;
+  document.getElementById('objectifLabel').textContent = objectif;
+
+  // Bar
+  document.getElementById('barFill').style.width = pct + '%';
+  document.getElementById('barFill').style.background = `linear-gradient(90deg, ${couleur}, ${couleur}99)`;
+
+  // Alert
+  const alert = document.getElementById('alertDepasse');
+  if (restant < 0) { alert.textContent = `⚠️ Objectif dépassé de ${Math.abs(restant)} kcal`; alert.classList.remove('hidden'); }
+  else alert.classList.add('hidden');
+
+  // Objectif buttons
+  document.querySelectorAll('#objectifList button[data-val]').forEach(b => {
+    b.classList.toggle('active', parseInt(b.dataset.val) === objectif);
+  });
+
+  // Search label
+  document.getElementById('searchLabel').textContent = `Rechercher un aliment (${tousAliments().length} disponibles)`;
+
+  // Journal count
+  document.getElementById('journalCount').textContent = journal.length;
+
+  // Journal items
+  refreshJournal(total, restant, couleur);
+
+  // Custom list
+  refreshCustomList();
+}
+
+function refreshJournal(total, restant, couleur) {
+  const empty = document.getElementById('emptyState');
+  const items = document.getElementById('journalItems');
+  const summary = document.getElementById('summary');
+  const saveInd = document.getElementById('saveIndicator');
+  const btnReinit = document.getElementById('btnReinit');
+
+  if (journal.length === 0) {
+    empty.classList.remove('hidden');
+    items.classList.add('hidden');
+    summary.classList.add('hidden');
+    saveInd.classList.add('hidden');
+    btnReinit.classList.add('hidden');
+  } else {
+    empty.classList.add('hidden');
+    items.classList.remove('hidden');
+    summary.classList.remove('hidden');
+    saveInd.classList.remove('hidden');
+    btnReinit.classList.remove('hidden');
+
+    items.innerHTML = journal.map(e => `
+      <div class="journal-item">
+        <div class="journal-left">
+          <span class="journal-emoji">${e.emoji}</span>
+          <div>
+            <div class="journal-name">${e.nom}</div>
+            ${e.quantite ? `<div class="journal-g">${e.quantite}g</div>` : ''}
+          </div>
+        </div>
+        <div class="journal-right">
+          <span class="journal-kcal">${e.kcal} kcal</span>
+          <button class="btn-remove" onclick="supprimer(${e.id})">✕</button>
+        </div>
+      </div>
+    `).join('');
+
+    document.getElementById('sumConsomme').textContent = total + ' kcal';
+    document.getElementById('sumConsomme').style.color = couleur;
+    document.getElementById('sumObjectif').textContent = objectif + ' kcal';
+    const restantAbs = Math.abs(restant);
+    document.getElementById('sumRestantLabel').textContent = restant >= 0 ? 'Il te reste' : 'Dépassement';
+    document.getElementById('sumRestant').textContent = restantAbs + ' kcal';
+    document.getElementById('sumRestant').style.color = restant >= 0 ? '#4ade80' : '#f87171';
+  }
+}
+
+function refreshCustomList() {
+  const section = document.getElementById('customSection');
+  const list = document.getElementById('customList');
+  const title = document.getElementById('customTitle');
+  if (alimentsCustom.length === 0) { section.classList.add('hidden'); return; }
+  section.classList.remove('hidden');
+  title.textContent = `📚 Tes produits sauvegardés (${alimentsCustom.length})`;
+  list.innerHTML = alimentsCustom.map((a, i) => `
+    <div class="custom-item">
+      <span>✏️ ${a.nom}</span>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span class="custom-kcal">${a.kcal} kcal</span>
+        <button class="btn-remove" onclick="supprimerCustom(${i})">✕</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// Tabs
+function showTab(tab) {
+  document.getElementById('panelAjouter').classList.toggle('hidden', tab !== 'ajouter');
+  document.getElementById('panelJournal').classList.toggle('hidden', tab !== 'journal');
+  document.getElementById('tabAjouter').classList.toggle('active', tab === 'ajouter');
+  document.getElementById('tabJournal').classList.toggle('active', tab === 'journal');
+}
+
+// Objectif
+function toggleObjectif() {
+  document.getElementById('objectifList').classList.toggle('hidden');
+}
+function setObjectif(val) {
+  if (!val || isNaN(val)) return;
+  objectif = val;
+  saveObjectif();
+  document.getElementById('objectifList').classList.add('hidden');
+  refreshAll();
+}
+
+// Search
+function onSearch() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const resultsList = document.getElementById('resultsList');
+  const noResult = document.getElementById('noResult');
+  const selectedCard = document.getElementById('selectedCard');
+
+  selectionne = null;
+  selectedCard.classList.add('hidden');
+
+  if (q.length < 2) { resultsList.classList.add('hidden'); noResult.classList.add('hidden'); return; }
+
+  const filtres = tousAliments().filter(a => a.nom.toLowerCase().includes(q));
+  if (filtres.length === 0) { resultsList.classList.add('hidden'); noResult.classList.remove('hidden'); return; }
+
+  noResult.classList.add('hidden');
+  resultsList.classList.remove('hidden');
+  resultsList.innerHTML = filtres.map(a => {
+    const isCustom = alimentsCustom.some(c => c.nom === a.nom);
+    return `<div class="result-item" onclick="selectAliment(${JSON.stringify(a).replace(/"/g, '&quot;')})">
+      <span>${a.emoji} ${a.nom}${isCustom ? '<span class="perso-badge">perso</span>' : ''}</span>
+      <span class="result-kcal">${a.kcal} kcal/100g</span>
+    </div>`;
+  }).join('');
+}
+
+function selectAliment(a) {
+  selectionne = a;
+  document.getElementById('searchInput').value = a.nom;
+  document.getElementById('resultsList').classList.add('hidden');
+  document.getElementById('noResult').classList.add('hidden');
+  document.getElementById('selEmoji').textContent = a.emoji;
+  document.getElementById('selNom').textContent = a.nom;
+  document.getElementById('selSub').textContent = a.kcal + ' kcal pour 100g';
+  document.getElementById('quantiteInput').value = 100;
+  document.getElementById('selectedCard').classList.remove('hidden');
+  updateTotal();
+}
+
+function updateTotal() {
+  if (!selectionne) return;
+  const q = parseInt(document.getElementById('quantiteInput').value) || 0;
+  const total = Math.round((selectionne.kcal * q) / 100);
+  document.getElementById('totalEstime').textContent = total + ' kcal';
+}
+
+function ajouterAliment() {
+  if (!selectionne) return;
+  const q = parseInt(document.getElementById('quantiteInput').value) || 100;
+  const kcal = Math.round((selectionne.kcal * q) / 100);
+  journal.push({ id: Date.now(), nom: selectionne.nom, emoji: selectionne.emoji, quantite: q, kcal });
+  saveJournal();
+  selectionne = null;
+  document.getElementById('searchInput').value = '';
+  document.getElementById('selectedCard').classList.add('hidden');
+  showTab('journal');
+  refreshAll();
+}
+
+function ajouterManuel() {
+  const nom = document.getElementById('nomManuel').value.trim();
+  const kcal = parseInt(document.getElementById('kcalManuel').value);
+  if (!nom || !kcal) return;
+
+  const msg = document.getElementById('msgManuel');
+  const dejaExistant = tousAliments().some(a => a.nom.toLowerCase() === nom.toLowerCase());
+
+  if (!dejaExistant) {
+    alimentsCustom.push({ nom, kcal, emoji: '✏️' });
+    saveCustom();
+    msg.textContent = `✅ "${nom}" ajouté à ta liste pour la prochaine fois !`;
+    msg.className = 'msg show';
+  } else {
+    msg.textContent = `ℹ️ "${nom}" existe déjà dans la liste.`;
+    msg.className = 'msg show info';
+  }
+  setTimeout(() => msg.classList.remove('show'), 3000);
+
+  journal.push({ id: Date.now(), nom, emoji: '✏️', quantite: null, kcal });
+  saveJournal();
+  document.getElementById('nomManuel').value = '';
+  document.getElementById('kcalManuel').value = '';
+  showTab('journal');
+  refreshAll();
+}
+
+function supprimer(id) {
+  journal = journal.filter(e => e.id !== id);
+  saveJournal();
+  refreshAll();
+}
+
+function supprimerCustom(i) {
+  alimentsCustom.splice(i, 1);
+  saveCustom();
+  refreshAll();
+}
+
+function reinitialiser() {
+  if (!confirm('Réinitialiser le journal du jour ?')) return;
+  journal = [];
+  saveJournal();
+  refreshAll();
+}
+
+load();
+</script>
+</body>
+</html>
